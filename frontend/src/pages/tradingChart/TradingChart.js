@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import Loading from '../../components/loading/Loading';
 import { useLocation } from 'react-router-dom';
@@ -42,9 +42,9 @@ function getCurrentDate() {
 
 function TradingChart() {
     const [data, setData] = useState([]);
-    const [timeFrame, setTimeFrame] = useState('5');
-    const [fromDate, setFromDate] = useState(getDateXDaysAgo(0));
-    const [toDate, setToDate] = useState(getCurrentDate());
+    const [timeFrame] = useState('5');
+    const [fromDate] = useState(getDateXDaysAgo(0));
+    const [toDate] = useState(getCurrentDate());
     const location = useLocation();
     const scrip = new URLSearchParams(location.search).get('symbol');
     const [loading, setLoading] = useState(false);
@@ -110,7 +110,7 @@ function TradingChart() {
         },
     ];
 
-    const getHistoricalScripData = async () => {
+    const getHistoricalScripData = useCallback(async () => {
         try {
             setLoading(true);
             const response = await axios.get(
@@ -118,16 +118,14 @@ function TradingChart() {
             );
             if (response.status === 200) {
                 let allData = [];
-                response.data.data.candles.map((candle) => {
-                    allData.push(
-                        {
-                            time: new Date(candle[0]).getTime(),
-                            open: candle[1],
-                            high: candle[2],
-                            low: candle[3],
-                            close: candle[4],
-                        }
-                    )
+                response.data.data.candles.forEach((candle) => {
+                    allData.push({
+                        time: new Date(candle[0]).getTime(),
+                        open: candle[1],
+                        high: candle[2],
+                        low: candle[3],
+                        close: candle[4],
+                    });
                 });
                 setLoading(false);
                 setData(allData);
@@ -137,11 +135,12 @@ function TradingChart() {
             // alert('Something went wrong');
             setLoading(false);
         }
-    };
+    }
+    , [fromDate, scrip, timeFrame, toDate])
 
     useEffect(() => {
         getHistoricalScripData();
-    }, [scrip]);
+    }, [scrip, getHistoricalScripData]);
 
 
     return (

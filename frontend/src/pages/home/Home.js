@@ -27,7 +27,7 @@ export default function Home() {
       navigate('/dashboard', { replace: true });
     }
     
-  },[]);
+  },[navigate]);
 
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>

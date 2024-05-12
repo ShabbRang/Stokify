@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -25,9 +25,8 @@ export default function OrdersTable({ status, refresh, setRefresh }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const getOrders = async () => {
+  const getOrders = useCallback(async () => {
     const userId = JSON.parse(localStorage.getItem('cmUser')).userid;
-    // const userId = "66196a4c9f30ada269f75d16";
     setLoading(true);
     try {
       const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/order/all?userId=${userId}&status=${status}`);
@@ -35,9 +34,8 @@ export default function OrdersTable({ status, refresh, setRefresh }) {
       if (response.status === 200) {
         setLoading(false);
         setRefresh(false);
-        let allOrders = [];
-        response.data.orders.map((order) => {
-          allOrders.push(createData(
+        const allOrders = response.data.orders.map((order) => {
+          return createData(
             order._id,
             order.createdAt,
             order.scripId.symbol,
@@ -48,7 +46,7 @@ export default function OrdersTable({ status, refresh, setRefresh }) {
             order.productType,
             order.priceType,
             order.orderStatus
-          ));
+          );
         });
         setOrders(allOrders);
       }
@@ -56,15 +54,16 @@ export default function OrdersTable({ status, refresh, setRefresh }) {
       console.log(err);
       alert("Something went wrong");
     }
-  }
+  }, [setRefresh, status])
+  
 
   useEffect(() => {
     getOrders();
-  }, []);
+  }, [getOrders]);
 
   useEffect(() => {
     if (refresh) getOrders();
-  }, [refresh]);
+  }, [refresh, getOrders]);
 
   return (
     <TableContainer component={Paper}>

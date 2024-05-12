@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,  useCallback } from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -41,18 +41,18 @@ export default function GLTable({ type, refreshGL, setRefreshGL }) {
     const [tableData, setTableData] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    const getGL = async () => {
+    const getGL = useCallback(async () => {
         try {
             setLoading(true);
             const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/analysis/gl`);
             if (response.status === 200) {
                 const glResponseData = response.data;
                 let glData;
-                if ( glResponseData.gainers && type === 'gainers')
+                if (glResponseData.gainers && type === 'gainers')
                     glData = glResponseData.gainers[0]['NIFTY'].data;
-                if( glResponseData.losers && type === 'losers' )
+                if (glResponseData.losers && type === 'losers')
                     glData = glResponseData.losers[0]['NIFTY'].data;
-
+    
                 glData = glData?.map((scrip) => {
                     return createData(
                         scrip.symbol,
@@ -73,9 +73,10 @@ export default function GLTable({ type, refreshGL, setRefreshGL }) {
             setLoading(false);
             alert('Something went wrong');
         }
-    }
+    }, [type]);
+    
 
-    const refreshGainerLosers = async () => {
+    const refreshGainerLosers = useCallback(async () => {
         try {
             const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/analysis/gl/save`);
             if(response.status === 200) {
@@ -87,17 +88,24 @@ export default function GLTable({ type, refreshGL, setRefreshGL }) {
             setRefreshGL(false);
             alert("Something went wrong");
         }
-    }
+    }, [getGL, setRefreshGL]);
+    
+    useEffect(() => {
+        if (refreshGL) {
+            refreshGainerLosers();
+        }
+    }, [refreshGL, refreshGainerLosers]);
+    
 
     useEffect(() => {
         getGL();
-    }, [type]);
+    }, [type, getGL]);
 
     useEffect(() => {
         if (refreshGL) {
             refreshGainerLosers();
         }
-    }, [refreshGL]);
+    }, [refreshGL, refreshGainerLosers]);
 
     return (
         <TableContainer component={Paper}>
